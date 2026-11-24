@@ -191,6 +191,35 @@ void displayExercise3(void)
 	glutSwapBuffers(); // swap front and back buffer
 }
 
+	CMat3f rotationMatrix(float angle) {
+		CMat3f matrix = CMat3f::Identity();
+		matrix(0, 0) = cos(angle);
+		matrix(0, 1) = -sin(angle);
+
+		matrix(1, 0) = sin(angle);
+		matrix(1, 1) = cos(angle);
+
+		return matrix;
+	}
+
+	CMat3f rotationAroundPointMatrix(const CVec3f& center, float angle) {
+		CMat3f matrix = rotationMatrix(angle);
+
+		matrix(0, 2) = center[0] - (center[0] * cos(angle)) + (center[1] * sin(angle));
+		matrix(1, 2) = center[1] - (center[0] * sin(angle)) - (center[1] * cos(angle));
+
+		return matrix;
+	}
+
+	void setDrawingPosition(Planet& body, const CVec3f& position)
+	{
+		CVec2f pixelPosition;
+		pixelPosition[0] = position[0] / position[2];
+		pixelPosition[1] = position[1] / position[2];
+
+		body.setPosition(pixelPosition);
+	}
+
 // display callback function for EXERCISE 4
 void displayExercise4(void)
 {
@@ -203,12 +232,32 @@ void displayExercise4(void)
 	// using the HOMOGENEOUS implementation of affine maps.
 	//
 
-	glBegin (GL_QUADS);
-	glColor3f(1, 0, 0);	glVertex2i(-g_vecPos[1], -g_vecPos[2]);
-	glColor3f(0, 1, 0);	glVertex2i( g_vecPos[1], -g_vecPos[2]);
-	glColor3f(0, 0, 1);	glVertex2i( g_vecPos[1],  g_vecPos[2]);
-	glColor3f(1, 1, 0);	glVertex2i(-g_vecPos[1],  g_vecPos[2]);
-	glEnd ();
+	Planet sun, planet, moon;
+
+	CVec3f sunPosition(0.0f, 0.0f, 1.0f);
+    CVec3f planetStart(180.0f, 0.0f, 1.0f);
+
+	CVec3f planetPosition = rotationMatrix(planetAngle) * planetStart;
+
+	CVec3f moonStart = planetPosition;
+	moonStart[0] += 50.0f;
+
+	CVec3f moonPosition = rotationAroundPointMatrix(planetPosition, moonAngle) * moonStart;
+
+	setDrawingPosition(sun, sunPosition);
+    sun.setRadius(30);
+    sun.setColor(Color(1.0, 1.0, 0.0));
+    sun.draw();
+
+    setDrawingPosition(planet, planetPosition);
+    planet.setRadius(20);
+    planet.setColor(Color(0.0, 0.0, 1.0));
+    planet.draw();
+
+    setDrawingPosition(moon, moonPosition);
+    moon.setRadius(10);
+    moon.setColor(Color(1.0, 0.0, 0.0));
+    moon.draw();
 
 	//
 	///////
@@ -251,7 +300,7 @@ int main (int argc, char **argv)
 
 	glutTimerFunc(10, timer, 0);
 	glutReshapeFunc (reshape);			// is triggered on window size changes
-	glutDisplayFunc (displayExercise3);	// is triggered to redraw the viewport/display
+	glutDisplayFunc (displayExercise4);	// is triggered to redraw the viewport/display
 	glutKeyboardFunc(keyboard);			// is triggered on keyboard events
 
 	// start main loop
